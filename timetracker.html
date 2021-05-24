@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Time tracker app</title>
+	<link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" >
+	<style type="text/css">
+		.task_row{
+			margin-top: 2%;
+		}
+		.task_history {
+			margin-top: 5%;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="row  task_row">
+			<div class="col-md-8">
+				<input type="text" name="task_name" id="task_name" class="form-control">
+			</div>
+			<div class="col-md-2">
+				<button class="btn btn-primary" id="logtask">Log Task</button>
+				<button class="btn btn-danger" id="endtask" style="display:none;">End Task</button>
+			</div>
+			<div class="col-md-2">
+				<h3 id="clock"></h3>
+			</div>
+		</div>
+		<div class="row task_history">
+			<ul id="task_history_list"></ul>
+		</div>
+	</div>
+	
+	<!-- Jquery -->
+	<script
+	  src="https://code.jquery.com/jquery-3.6.0.min.js"
+	  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+	  crossorigin="anonymous"></script>
+
+	<script type="text/javascript">
+
+		$(document).ready(
+        	function(){
+        		if (localStorage.tasks != undefined){
+			    	task_list = JSON.parse(localStorage.tasks);
+			    	console.log(task_list);
+			    	let init_html = "";
+			    	$.each(task_list, function(index, value){
+			    		init_html += "<li>"+value.task_name + " | " + value.duration + "</li>";
+			    	});
+			    	$("#task_history_list").html(init_html);
+			    }     
+        	});
+
+		$("#logtask").on("click", function(){
+			$(this).hide();
+			$("#endtask").show();
+			let start_time = new Date();
+			window.interval = setInterval(function(){
+				let current_time = new Date();
+				$("#clock").html(msToTime(current_time - start_time));
+			}, 1000);
+			task_name = $("#task_name").val();
+			let task_data = {"task_name": task_name, "start_time": start_time}
+			if (localStorage.getItem("tasks") != undefined){
+				// subsequent tasks
+				let tasks_list = JSON.parse(localStorage.tasks);
+				tasks_list.push(task_data);
+				localStorage.tasks = JSON.stringify(tasks_list);
+			} else {
+				// first task
+				localStorage.tasks = JSON.stringify([
+					task_data
+				]);
+			}
+		})
+
+		$("#endtask").on("click", function(){
+			$(this).hide();
+			$("#logtask").show();
+			let end_time = new Date();
+			task_name = $("#task_name").val();
+			tasks_list = JSON.parse(localStorage.tasks);
+			tasks_length = tasks_list.length;
+			tasks_list[tasks_length-1].end_time = end_time;
+			start_time = tasks_list[tasks_length-1].start_time;
+			duration = msToTime(end_time.getTime() - Date.parse(start_time));
+			tasks_list[tasks_length-1].duration = duration;
+			localStorage.tasks = JSON.stringify(tasks_list);
+			let task_text = "<li>" + task_name + " | " + duration + "</li>"; 
+			$("#task_history_list").append(task_text);
+			$("#clock").html("");
+			clearInterval(interval);
+			$("#task_name").val("");
+
+		})
+
+		function msToTime(duration) {
+		    var seconds = Math.floor((duration / 1000) % 60),
+		    minutes = Math.floor((duration / (1000 * 60)) % 60),
+		    hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+		    console.log((duration / 1000));
+		    console.log((duration / (1000 * 60)));
+		    console.log((duration / (1000 * 60 * 60)));
+		  	hours = (hours < 10) ? "0" + hours : hours;
+		  	minutes = (minutes < 10) ? "0" + minutes : minutes;
+		  	seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+		  	return hours + ":" + minutes + ":" + seconds;
+		}
+	</script> 
+</body>
+</html>
+
+
+
+
+
+
+
